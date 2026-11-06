@@ -476,11 +476,11 @@ function rewardFor(ok,mode){
     return null;
   }
   if(ok===0)  return {img:REWARD_IMGS[0],h:"Zero correct …",p:"You still get something. Whether you’ll like it is another question.",btn:"Open consolation prize"};
-  if(ok>20)   return {img:SECRET_IMG,h:"More than 20 correct!",p:"The highest tier. It doesn’t get better than this.",btn:"Open grand prize",top:true};
-  if(ok>=20)  return {img:REWARD_IMGS[4],h:"20 correct!",p:"Just one more correct answer for the grand prize.",btn:"Belohnung öffnen"};
-  if(ok>=15)  return {img:REWARD_IMGS[3],h:"15 correct!",p:"Tier 3 of 4. It gets even better at 20.",btn:"Belohnung öffnen"};
-  if(ok>=10)  return {img:REWARD_IMGS[2],h:"10 correct!",p:"Tier 2 of 4. Get 15 for the next one.",btn:"Belohnung öffnen"};
-  if(ok>=5)   return {img:REWARD_IMGS[1],h:"5 correct!",p:"Tier 1 of 4. Get 10 for the next one.",btn:"Belohnung öffnen"};
+  if(ok>=25)  return {img:SECRET_IMG,h:ok+" correct!",p:"The highest tier. It doesn’t get better than this.",btn:"Open grand prize",top:true};
+  if(ok>=20)  return {img:REWARD_IMGS[4],h:ok+" correct!",p:"Tier 4 of 4. Get 25 for the grand prize.",btn:"Belohnung öffnen"};
+  if(ok>=15)  return {img:REWARD_IMGS[3],h:ok+" correct!",p:"Tier 3 of 4. Get 20 for the next one.",btn:"Belohnung öffnen"};
+  if(ok>=10)  return {img:REWARD_IMGS[2],h:ok+" correct!",p:"Tier 2 of 4. Get 15 for the next one.",btn:"Belohnung öffnen"};
+  if(ok>=5)   return {img:REWARD_IMGS[1],h:ok+" correct!",p:"Tier 1 of 4. Get 10 for the next one.",btn:"Belohnung öffnen"};
   return null;
 }
 const CASE_NAME={Nom:"Nominative",Akk:"Accusative",Dat:"Dative",Gen:"Genitive"};

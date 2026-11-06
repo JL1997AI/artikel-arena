@@ -1,0 +1,748 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2B57CF">
+<title>Artikel-Arena</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+/* Layout: one narrow column, app-like; home = status + modes + ranking, game = full-focus card with three colour keys */
+:root{
+  --bg:#F1F3F7; --surface:#FFFFFF; --sunk:#E6E9F0; --ink:#151924; --muted:#5B6274; --line:#D8DDE7;
+  --der:#2B57CF; --die:#CF3535; --das:#178F5A; --gold:#C98A06; --gold-soft:#FBEFD2;
+  --der-soft:#E3EAFB; --die-soft:#FBE4E4; --das-soft:#DDF3E8;
+  --f-display:"Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", system-ui, -apple-system, sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E1117; --surface:#171B24; --sunk:#202532; --ink:#ECEEF4; --muted:#9BA2B4; --line:#2A303D;
+  --der:#7096FF; --die:#FF6E6E; --das:#3CCB8B; --gold:#F2BE3D; --gold-soft:#3A2F12;
+  --der-soft:#1C2847; --die-soft:#40191B; --das-soft:#123528; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1117; --surface:#171B24; --sunk:#202532; --ink:#ECEEF4; --muted:#9BA2B4; --line:#2A303D;
+  --der:#7096FF; --die:#FF6E6E; --das:#3CCB8B; --gold:#F2BE3D; --gold-soft:#3A2F12;
+  --der-soft:#1C2847; --die-soft:#40191B; --das-soft:#123528; color-scheme:dark}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 var(--f-body);-webkit-tap-highlight-color:transparent}
+.wrap{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 40px;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h2{font-size:1.15rem;font-weight:700}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--der);outline-offset:2px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.label{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.muted{color:var(--muted)}
+
+/* top bar */
+.top{display:flex;align-items:center;gap:12px}
+.brand{font-family:var(--f-display);font-weight:800;font-size:1.35rem;line-height:1;display:flex;gap:2px;align-items:baseline}
+.brand i{font-style:normal}
+.brand .d1{color:var(--der)} .brand .d2{color:var(--die)} .brand .d3{color:var(--das)}
+.top .spacer{flex:1}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-weight:700;font-size:.9rem}
+.chip svg{width:16px;height:16px}
+
+/* status card */
+.status{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center}
+.lvl{width:64px;height:64px;position:relative;display:grid;place-items:center}
+.lvl svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.lvl b{font-family:var(--f-display);font-size:1.6rem;font-weight:800}
+.status .who{min-width:0;display:flex;flex-direction:column;gap:6px}
+.status .who h3{font-size:1.1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar{height:8px;border-radius:99px;background:var(--sunk);overflow:hidden}
+.bar>span{display:block;height:100%;background:var(--gold);border-radius:99px;transition:width .6s ease}
+.row{display:flex;justify-content:space-between;gap:10px;font-size:.85rem}
+.goal{grid-column:1/-1;display:flex;gap:10px;align-items:center;padding-top:12px;border-top:1px dashed var(--line);font-size:.9rem}
+.goal .bar{flex:1}
+.goal .bar>span{background:var(--das)}
+
+/* modes */
+.modes{display:grid;gap:10px}
+.mode{display:grid;grid-template-columns:52px 1fr auto;gap:14px;align-items:center;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;transition:transform .12s,border-color .12s}
+.mode:hover{transform:translateY(-1px);border-color:var(--muted)}
+.mode:active{transform:scale(.99)}
+.mode .ico{width:52px;height:52px;border-radius:12px;display:grid;place-items:center;font-family:var(--f-display);font-weight:800;font-size:1.05rem}
+.mode h3{font-size:1.05rem}
+.mode p{margin:2px 0 0;font-size:.88rem;color:var(--muted)}
+.mode .go{font-size:1.3rem;color:var(--muted)}
+.mode[disabled]{opacity:.55;cursor:default;transform:none}
+.ico.blitz{background:var(--der-soft);color:var(--der)}
+.ico.fall{background:var(--die-soft);color:var(--die)}
+.ico.tresor{background:var(--das-soft);color:var(--das)}
+.levels{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.levels .label{margin-right:4px}
+.pill{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-weight:700;font-size:.85rem}
+.pill[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+/* ranking */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px}
+.panel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.tabs{display:flex;gap:4px;background:var(--sunk);padding:3px;border-radius:10px}
+.tabs button{border:0;background:transparent;padding:5px 10px;border-radius:8px;font-size:.82rem;font-weight:700;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink)}
+.rank{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.rank li{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.rank li:first-child{border-top:0}
+.rank .pos{font-family:var(--f-display);font-weight:800;text-align:center;color:var(--muted)}
+.rank li:nth-child(1) .pos{color:var(--gold)}
+.rank .nm{min-width:0}
+.rank .nm b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rank .nm small{color:var(--muted)}
+.rank .val{font-weight:700}
+.rank li.me{background:linear-gradient(90deg,var(--gold-soft),transparent);margin-inline:-16px;padding-inline:16px}
+.note{font-size:.85rem;color:var(--muted);margin:0}
+
+.pstats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.pstats div{background:var(--sunk);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column}
+.pstats b{font-size:1.3rem}
+/* badges */
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.badge{border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center;display:flex;flex-direction:column;gap:4px;align-items:center}
+.badge .medal{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-display);font-weight:800;font-size:.9rem;background:var(--sunk);color:var(--muted)}
+.badge.on .medal{background:var(--gold);color:#1a1405}
+.badge b{font-size:.8rem;line-height:1.2}
+.badge small{font-size:.7rem;color:var(--muted);line-height:1.2}
+.badge:not(.on) b{color:var(--muted)}
+.album{display:flex;flex-direction:column;gap:8px}
+.album .seg{display:flex;height:10px;border-radius:99px;overflow:hidden;background:var(--sunk)}
+.album .seg span{height:100%}
+
+/* game */
+.game{min-height:100%;display:flex;flex-direction:column;gap:16px}
+.ghead{display:flex;align-items:center;gap:12px}
+.x{border:1px solid var(--line);background:var(--surface);border-radius:10px;width:40px;height:40px;display:grid;place-items:center;font-size:1.2rem}
+.ghead .bar{flex:1;height:10px}
+.ghead .bar>span{background:var(--der);transition:width .2s linear}
+.ghead .bar.fall>span{background:var(--die)}
+.ghead .bar.tresor>span{background:var(--das)}
+.gstats{display:flex;justify-content:space-between;align-items:center}
+.combo{font-family:var(--f-display);font-weight:800;color:var(--gold);font-size:1.1rem;min-height:1.5em}
+.card{flex:1;min-height:240px;background:var(--surface);border:1px solid var(--line);border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px 18px;text-align:center;position:relative;overflow:hidden;transition:border-color .15s, background .15s}
+.card .tag{position:absolute;top:14px;left:14px}
+.card .case{position:absolute;top:14px;right:14px}
+.word{font-family:var(--f-display);font-weight:800;font-size:clamp(2rem,9vw,3.1rem);line-height:1.05;overflow-wrap:anywhere}
+.word .art{display:inline-block;margin-right:.25em}
+.sentence{font-size:clamp(1.25rem,5.2vw,1.6rem);line-height:1.45;font-weight:700;max-width:30ch}
+.blank{display:inline-block;min-width:3.2em;border-bottom:3px solid var(--muted);color:var(--muted);padding:0 .1em}
+.blank.ok{border-color:var(--das);color:var(--das)}
+.blank.bad{border-color:var(--die);color:var(--die)}
+.card.ok{border-color:var(--das);background:var(--das-soft)}
+.card.bad{border-color:var(--die);background:var(--die-soft)}
+.hint{font-size:.98rem;max-width:36ch;margin:0}
+.hint b{font-family:var(--f-display)}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.keys.six{grid-template-columns:repeat(3,1fr)}
+.key{border:0;border-radius:14px;padding:18px 6px;font-family:var(--f-display);font-weight:800;font-size:1.45rem;color:#fff;box-shadow:0 4px 0 rgba(0,0,0,.18);transition:transform .08s, box-shadow .08s}
+.key:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.18)}
+.key.k-der{background:var(--der)} .key.k-die{background:var(--die)} .key.k-das{background:var(--das)}
+.keys.six .key{background:var(--surface);color:var(--ink);border:2px solid var(--line);box-shadow:0 3px 0 var(--line);font-size:1.25rem;padding:14px 6px}
+.key[disabled]{opacity:.5;cursor:default}
+.next{border:0;background:var(--ink);color:var(--bg);border-radius:14px;padding:16px;font-weight:700;font-size:1.05rem}
+.kbd{font-size:.75rem;text-align:center;color:var(--muted)}
+
+/* result */
+.result{display:flex;flex-direction:column;gap:16px}
+.hero{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:22px 18px;text-align:center;display:flex;flex-direction:column;gap:6px;align-items:center}
+.hero .big{font-family:var(--f-display);font-weight:800;font-size:3.2rem;line-height:1;color:var(--gold)}
+.hero .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;margin-top:10px}
+.hero .stats div{background:var(--sunk);border-radius:10px;padding:8px 4px}
+.hero .stats b{display:block;font-size:1.2rem}
+.lvlup{background:var(--gold);color:#1a1405;border-radius:14px;padding:14px;text-align:center;font-family:var(--f-display);font-weight:800;font-size:1.15rem}
+.mist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.mist li{border-left:4px solid var(--line);padding:4px 0 4px 12px}
+.mist li.m{border-color:var(--der)} .mist li.f{border-color:var(--die)} .mist li.n{border-color:var(--das)}
+.mist small{display:block;color:var(--muted)}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:14px;font-weight:700}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+/* onboarding */
+.onb{display:flex;flex-direction:column;gap:12px}
+.onb input{font:inherit;font-size:1.1rem;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.trio{display:flex;gap:8px;font-family:var(--f-display);font-weight:800;font-size:2.4rem;line-height:1}
+.trio span:nth-child(1){color:var(--der)} .trio span:nth-child(2){color:var(--die)} .trio span:nth-child(3){color:var(--das)}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:700;font-size:.9rem;z-index:20;max-width:calc(100% - 32px)}
+@keyframes pop{0%{transform:scale(.92)}60%{transform:scale(1.04)}100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.card.ok{animation:pop .25s}
+.card.bad{animation:shake .3s}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="app">
+  <div class="top">
+    <div class="brand"><i class="d1">der</i><i>·</i><i class="d2">die</i><i>·</i><i class="d3">das</i>&nbsp;<span>Arena</span></div>
+  </div>
+  <div class="panel"><p class="note">Lade die Arena …</p></div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* ============================== DATEN ============================== */
+const WORDS_RAW = {
+B1: {
+m:"Abschluss,Anfang,Antrag,Arbeitgeber,Ausflug,Ausweis,Bahnsteig,Beitrag,Berg,Beruf,Besuch,Betrieb,Bildschirm,Blick,Boden,Briefkasten,Drucker,Durst,Eindruck,Eingang,Erfolg,Fahrplan,Fehler,Feiertag,Gast,Gedanke,Geldbeutel,Geschmack,Grund,Hals,Honig,Hunger,Kalender,Kassenzettel,Käse,Keller,Kunde,Kühlschrank,Lärm,Lohn,Löffel,Mietvertrag,Müll,Nachbar,Nachteil,Ort,Pass,Rasen,Rat,Reis,Rest,Rücken,Schalter,Schlüssel,Schmerz,Schrank,Schreibtisch,Senf,Spiegel,Stau,Strom,Teppich,Termin,Topf,Umzug,Unfall,Unterschied,Urlaub,Verkehr,Vertrag,Vorteil,Wald,Wecker,Wunsch,Zahn,Zettel,Zug,Zweck,Tourist",
+f:"Abfahrt,Absicht,Adresse,Ankunft,Anzeige,Apotheke,Ausbildung,Ausnahme,Bedingung,Bewerbung,Brille,Brücke,Decke,Dusche,Ecke,Einladung,Entscheidung,Erfahrung,Erkältung,Fahrkarte,Farbe,Feier,Firma,Flasche,Freiheit,Gabel,Gefahr,Gesundheit,Größe,Grenze,Haltestelle,Heimat,Hilfe,Hose,Jacke,Kasse,Kündigung,Lösung,Luft,Mannschaft,Meinung,Miete,Möglichkeit,Musik,Nachricht,Nähe,Pflanze,Prüfung,Quittung,Rechnung,Reise,Rente,Ruhe,Sache,Schachtel,Seife,Sorge,Speisekarte,Stelle,Strafe,Tasche,Tasse,Treppe,Tüte,Umgebung,Umwelt,Unterkunft,Untersuchung,Verabredung,Verantwortung,Versicherung,Wäsche,Wirtschaft,Wohnung,Zeitung,Zukunft,Zwiebel,Polizei",
+n:"Abenteuer,Angebot,Ausland,Bett,Bild,Brot,Büro,Dach,Datum,Dorf,Ei,Einkommen,Ende,Ereignis,Ergebnis,Fach,Fahrrad,Fenster,Fieber,Formular,Frühstück,Gebäude,Gefühl,Gehalt,Gemüse,Gepäck,Gericht,Geschäft,Geschenk,Gesetz,Getränk,Glück,Handy,Heft,Hemd,Interesse,Jahrhundert,Kissen,Kleid,Konto,Krankenhaus,Licht,Mädchen,Medikament,Messer,Netz,Obst,Ohr,Paket,Pech,Problem,Rathaus,Rezept,Schild,Seil,Sofa,Spiel,Studium,Taschentuch,Thema,Tier,Tor,Treffen,Ufer,Vergnügen,Verhalten,Vertrauen,Wetter,Wissen,Zeugnis,Ziel,Zentrum,Zimmer,Museum"
+},
+B2: {
+m:"Abstand,Anlass,Anspruch,Aufenthalt,Aufwand,Ausdruck,Ausgleich,Austausch,Autor,Beleg,Bereich,Bescheid,Bestandteil,Betrag,Bezug,Einfluss,Einwand,Empfang,Entwurf,Ertrag,Faktor,Fortschritt,Haushalt,Hinweis,Kompromiss,Konflikt,Kontakt,Kreislauf,Lehrling,Mangel,Maßstab,Motor,Nachweis,Praktikant,Rückgang,Ruf,Schaden,Standpunkt,Stoff,Streik,Tourismus,Umgang,Umsatz,Umstand,Verbrauch,Verdacht,Verlust,Verzicht,Versuch,Vorgang,Vorwurf,Wettbewerb,Widerspruch,Zugang,Zusammenhang,Zustand,Zweifel,Journalist",
+f:"Abhängigkeit,Abteilung,Ahnung,Anforderung,Ausstattung,Auswirkung,Bäckerei,Bedeutung,Behörde,Belastung,Beziehung,Branche,Debatte,Ebene,Eigenschaft,Einrichtung,Energie,Entwicklung,Erlaubnis,Ernährung,Folge,Forderung,Gelegenheit,Gesellschaft,Gewohnheit,Haltung,Herausforderung,Herkunft,Kenntnis,Konkurrenz,Kritik,Kultur,Leistung,Maßnahme,Menge,Methode,Nachfrage,Natur,Politik,Qualität,Rolle,Schwierigkeit,Situation,Spannung,Stimmung,Strategie,Tätigkeit,Tendenz,Toleranz,Umfrage,Ursache,Veranstaltung,Verbindung,Vereinbarung,Vielfalt,Voraussetzung,Wahl,Wirkung,Zufriedenheit,Zusammenarbeit",
+n:"Abitur,Abkommen,Album,Anliegen,Argument,Bedürfnis,Bewusstsein,Bündnis,Defizit,Dokument,Eigentum,Element,Engagement,Experiment,Fundament,Gebiet,Gedächtnis,Gegenteil,Gehirn,Gewicht,Gewissen,Gleichgewicht,Gymnasium,Hindernis,Instrument,Kapital,Klima,Konzept,Labor,Merkmal,Misstrauen,Muster,Niveau,Phänomen,Prinzip,Publikum,Restaurant,Risiko,Schicksal,Signal,Spektrum,Symptom,Talent,Unternehmen,Ventil,Verfahren,Verhältnis,Verständnis,Vorurteil,Wachstum,Werkzeug,Zertifikat,Zitat"
+},
+C1: {
+m:"Ansatz,Aspekt,Aufschwung,Befund,Beschluss,Bestand,Diskurs,Durchbruch,Eingriff,Einklang,Engpass,Erlass,Gegensatz,Grundsatz,Indikator,Irrtum,Konsens,Kontext,Mechanismus,Missbrauch,Nachlass,Pessimismus,Rahmen,Realismus,Reichtum,Rückschlag,Spielraum,Stellenwert,Überblick,Umbruch,Verlauf,Verstoß,Vorbehalt,Vorsatz,Wandel,Wohlstand,Zerfall,Zuschlag,Zuwachs",
+f:"Abwägung,Akzeptanz,Ambivalenz,Annahme,Aufklärung,Befugnis,Bilanz,Bürokratie,Diskrepanz,Distanz,Erkenntnis,Errungenschaft,Ethik,Fiktion,Gewährleistung,Hierarchie,Hypothese,Ideologie,Infrastruktur,Integrität,Intuition,Kompetenz,Konsequenz,Legitimität,Mentalität,Nachhaltigkeit,Prämisse,Resonanz,Rezession,Rhetorik,Sanktion,Skepsis,Souveränität,Subvention,Tragweite,Transparenz,Verjährung,Vernunft,Willkür,Würde,Zuversicht",
+n:"Ausmaß,Credo,Dilemma,Ermessen,Fazit,Gefälle,Gremium,Gutachten,Indiz,Kollektiv,Kriterium,Monopol,Paradoxon,Pendant,Plädoyer,Postulat,Potenzial,Prestige,Privileg,Ressort,Resümee,Szenario,Terrain,Vakuum,Verhängnis,Vermögen,Versäumnis,Wagnis,Zugeständnis"
+}};
+const ART = {m:"der", f:"die", n:"das"};
+const WORDS = []; const seen = new Set();
+for (const lv of ["B1","B2","C1"]) for (const g of ["m","f","n"])
+  for (const w of WORDS_RAW[lv][g].split(",")) { const t=w.trim(); if(!t||seen.has(t)) continue; seen.add(t); WORDS.push({w:t,g,lv}); }
+const WORD_BY = Object.fromEntries(WORDS.map(x=>[x.w,x]));
+
+/* Endungsregeln: Reihenfolge = Priorität */
+const RULES = [
+ ["ismus","m"],["schaft","f"],["heit","f"],["keit","f"],["chen","n"],["lein","n"],["ling","m"],["ment","n"],
+ ["tum","n"],["ung","f"],["ion","f"],["tät","f"],["enz","f"],["anz","f"],["nis","n"],["ist","m"],["ant","m"],
+ ["ik","f"],["ie","f"],["ei","f"],["ur","f"],["um","n"],["or","m"],["o","n"]
+];
+const RULE_NOTE = {
+  nis:"Bei -nis ist es knifflig: meist <b>das</b> (das Ergebnis), aber einige sind <b>die</b> (die Erlaubnis, die Kenntnis).",
+  tum:"-tum ist meist <b>das</b> (das Eigentum). Ausnahmen: der Irrtum, der Reichtum.",
+  o:"Fremdwörter auf -o sind meist <b>das</b> (das Büro, das Konto).",
+  ur:"Wörter auf -ur sind meist <b>die</b> (die Kultur). Ausnahme: das Abitur.",
+  ung:"Ableitungen von Verben auf -ung sind <b>die</b>. Wörter wie der Schwung gehören nicht dazu."
+};
+const NO_RULE=new Set(["Streik","Spielraum"]); // Endung passt nur zufällig
+function ruleFor(item){
+  if(NO_RULE.has(item.w)) return null;
+  const w=item.w.toLowerCase();
+  for(const [s,g] of RULES){ if(w.endsWith(s) && w.length>s.length+1) return {s,g,match:g===item.g}; }
+  return null;
+}
+function explain(item){
+  const art=ART[item.g], name=`<b>${art} ${item.w}</b>`;
+  const r=ruleFor(item);
+  if(r){
+    const extra=RULE_NOTE[r.s]?` ${RULE_NOTE[r.s]}`:"";
+    if(r.match) return `${name} – Regel: Nomen auf <b>-${r.s}</b> sind ${gName(r.g)}.${extra}`;
+    return `${name} – Ausnahme! Eigentlich gilt: -${r.s} → ${ART[r.g]}.${extra}`;
+  }
+  if(item.g==="n" && /en$/.test(item.w)) return `${name} – Nominalisierte Infinitive (das Treffen, das Wissen) sind immer neutral.`;
+  if(item.g==="n" && /^Ge/.test(item.w)) return `${name} – Viele Nomen mit <b>Ge-</b> sind neutral (das Gebäude, das Gefühl).`;
+  if(item.g==="m" && /er$/.test(item.w))
+    return `${name} – Viele Nomen auf -er sind maskulin (der Drucker, der Keller), aber nicht alle (das Fenster).`;
+  return `${name} – Hier hilft keine Regel. Merk es dir mit Farbe: ${art==="der"?"blau":art==="die"?"rot":"grün"}.`;
+}
+function gName(g){return g==="m"?"maskulin (der)":g==="f"?"feminin (die)":"neutral (das)";}
+
+/* Fall-Sätze: s = Satz, a = Antwort, c = Fall, r = Begründung */
+const CASES = [
+ {s:"Ich warte seit einer Stunde auf ___ Bus.",a:"den",c:"Akk",r:"warten auf + Akkusativ · der Bus → den Bus"},
+ {s:"Wir sprechen morgen mit ___ Vermieter.",a:"dem",c:"Dat",r:"mit + Dativ · der Vermieter → dem Vermieter"},
+ {s:"Trotz ___ Regens fand das Konzert statt.",a:"des",c:"Gen",r:"trotz + Genitiv · der Regen → des Regens"},
+ {s:"Sie hat ___ Antrag gestern abgegeben.",a:"den",c:"Akk",r:"Akkusativobjekt (was?) · der Antrag → den Antrag"},
+ {s:"Ich gebe ___ Kind ein Glas Wasser.",a:"dem",c:"Dat",r:"geben: Person im Dativ (wem?) · das Kind → dem Kind"},
+ {s:"Das Ende ___ Films war überraschend.",a:"des",c:"Gen",r:"Genitivattribut (wessen?) · der Film → des Films"},
+ {s:"___ Rechnung liegt auf dem Tisch.",a:"die",c:"Nom",r:"Subjekt (wer/was?) · die Rechnung"},
+ {s:"Er legt das Handy auf ___ Tisch.",a:"den",c:"Akk",r:"Wechselpräposition, wohin? → Akkusativ · der Tisch → den Tisch"},
+ {s:"Das Handy liegt auf ___ Tisch.",a:"dem",c:"Dat",r:"Wechselpräposition, wo? → Dativ · der Tisch → dem Tisch"},
+ {s:"Wegen ___ Streiks fällt der Zug aus.",a:"des",c:"Gen",r:"wegen + Genitiv · der Streik → des Streiks"},
+ {s:"Ich danke ___ Kollegin für ihre Hilfe.",a:"der",c:"Dat",r:"danken + Dativ · die Kollegin → der Kollegin"},
+ {s:"Er hilft ___ Nachbarn beim Umzug.",a:"dem",c:"Dat",r:"helfen + Dativ · der Nachbar → dem Nachbarn (n-Deklination)"},
+ {s:"Kennst du ___ Ergebnis schon?",a:"das",c:"Akk",r:"Akkusativobjekt · bei Neutrum gilt Akk = Nom → das Ergebnis"},
+ {s:"Die Farbe ___ Wohnung gefällt mir.",a:"der",c:"Gen",r:"Genitivattribut · die Wohnung → der Wohnung"},
+ {s:"Wir gehen durch ___ Park.",a:"den",c:"Akk",r:"durch + Akkusativ · der Park → den Park"},
+ {s:"Nach ___ Unterricht gehen wir essen.",a:"dem",c:"Dat",r:"nach + Dativ · der Unterricht → dem Unterricht"},
+ {s:"Sie arbeitet bei ___ Firma Müller.",a:"der",c:"Dat",r:"bei + Dativ · die Firma → der Firma"},
+ {s:"Ohne ___ Schlüssel komme ich nicht rein.",a:"den",c:"Akk",r:"ohne + Akkusativ · der Schlüssel → den Schlüssel"},
+ {s:"Ich interessiere mich für ___ Thema.",a:"das",c:"Akk",r:"sich interessieren für + Akkusativ · das Thema"},
+ {s:"Während ___ Prüfung bleibt das Handy aus.",a:"der",c:"Gen",r:"während + Genitiv · die Prüfung → der Prüfung"},
+ {s:"Er stellt die Vase auf ___ Fensterbank.",a:"die",c:"Akk",r:"wohin? → Akkusativ · die Fensterbank (Fem.: Akk = Nom)"},
+ {s:"Die Vase steht auf ___ Fensterbank.",a:"der",c:"Dat",r:"wo? → Dativ · die Fensterbank → der Fensterbank"},
+ {s:"Ich habe ___ Termin leider vergessen.",a:"den",c:"Akk",r:"Akkusativobjekt · der Termin → den Termin"},
+ {s:"___ Vertrag läuft Ende des Jahres aus.",a:"der",c:"Nom",r:"Subjekt · der Vertrag"},
+ {s:"Statt ___ Briefs schicke ich eine E-Mail.",a:"des",c:"Gen",r:"statt + Genitiv · der Brief → des Briefs"},
+ {s:"Wir treffen uns vor ___ Rathaus.",a:"dem",c:"Dat",r:"vor, wo? → Dativ · das Rathaus → dem Rathaus"},
+ {s:"Gegen ___ Entscheidung legt sie Widerspruch ein.",a:"die",c:"Akk",r:"gegen + Akkusativ · die Entscheidung"},
+ {s:"Er erzählt ___ Publikum eine Anekdote.",a:"dem",c:"Dat",r:"erzählen: Person im Dativ · das Publikum → dem Publikum"},
+ {s:"Die Qualität ___ Produkts ist hervorragend.",a:"des",c:"Gen",r:"Genitivattribut · das Produkt → des Produkts"},
+ {s:"Seit ___ Umzug fühle ich mich wohler.",a:"dem",c:"Dat",r:"seit + Dativ · der Umzug → dem Umzug"},
+ {s:"Sie widerspricht ___ Chef.",a:"dem",c:"Dat",r:"widersprechen + Dativ · der Chef → dem Chef"},
+ {s:"Aufgrund ___ Verdachts ermittelt die Polizei.",a:"des",c:"Gen",r:"aufgrund + Genitiv · der Verdacht → des Verdachts"},
+ {s:"Wir diskutieren über ___ Problem.",a:"das",c:"Akk",r:"diskutieren über + Akkusativ · das Problem"},
+ {s:"Er hängt das Bild an ___ Wand.",a:"die",c:"Akk",r:"wohin? → Akkusativ · die Wand"},
+ {s:"Das Bild hängt an ___ Wand.",a:"der",c:"Dat",r:"wo? → Dativ · die Wand → der Wand"},
+ {s:"Dieses Fahrrad gehört ___ Mädchen dort.",a:"dem",c:"Dat",r:"gehören + Dativ · das Mädchen → dem Mädchen"},
+ {s:"Innerhalb ___ Frist muss der Antrag eingehen.",a:"der",c:"Gen",r:"innerhalb + Genitiv · die Frist → der Frist"},
+ {s:"Bitte schließ ___ Fenster.",a:"das",c:"Akk",r:"Akkusativobjekt · das Fenster"},
+ {s:"___ Maßnahme zeigt bereits Wirkung.",a:"die",c:"Nom",r:"Subjekt · die Maßnahme"},
+ {s:"Er fährt mit ___ Fahrrad zur Arbeit.",a:"dem",c:"Dat",r:"mit + Dativ · das Fahrrad → dem Fahrrad"},
+ {s:"Angesichts ___ Lage bleiben wir ruhig.",a:"der",c:"Gen",r:"angesichts + Genitiv · die Lage → der Lage"},
+ {s:"Ich vertraue ___ Urteil meiner Ärztin.",a:"dem",c:"Dat",r:"vertrauen + Dativ · das Urteil → dem Urteil"},
+ {s:"Sie beantragt ___ Zuschuss beim Amt.",a:"den",c:"Akk",r:"Akkusativobjekt · der Zuschuss → den Zuschuss"},
+ {s:"Er gratuliert ___ Kollegin zum Geburtstag.",a:"der",c:"Dat",r:"gratulieren + Dativ · die Kollegin → der Kollegin"},
+ {s:"Wir verzichten auf ___ Nachtisch.",a:"den",c:"Akk",r:"verzichten auf + Akkusativ · der Nachtisch → den Nachtisch"},
+ {s:"Die Ursache ___ Konflikts ist unklar.",a:"des",c:"Gen",r:"Genitivattribut · der Konflikt → des Konflikts"},
+ {s:"Das Buch liegt unter ___ Bett.",a:"dem",c:"Dat",r:"wo? → Dativ · das Bett → dem Bett"},
+ {s:"Die Katze kriecht unter ___ Bett.",a:"das",c:"Akk",r:"wohin? → Akkusativ · das Bett"},
+ {s:"Ich erinnere mich gern an ___ Abend.",a:"den",c:"Akk",r:"sich erinnern an + Akkusativ · der Abend → den Abend"},
+ {s:"Sie bedankt sich bei ___ Publikum.",a:"dem",c:"Dat",r:"bei + Dativ · das Publikum → dem Publikum"},
+ {s:"Er bezweifelt ___ Aussage des Zeugen.",a:"die",c:"Akk",r:"Akkusativobjekt · die Aussage"},
+ {s:"Infolge ___ Unfalls war die Straße gesperrt.",a:"des",c:"Gen",r:"infolge + Genitiv · der Unfall → des Unfalls"},
+ {s:"Die Kinder spielen in ___ Garten.",a:"dem",c:"Dat",r:"wo? → Dativ · der Garten → dem Garten"},
+ {s:"Ich bringe den Müll in ___ Keller.",a:"den",c:"Akk",r:"wohin? → Akkusativ · der Keller → den Keller"},
+ {s:"___ Kind schläft schon.",a:"das",c:"Nom",r:"Subjekt · das Kind"},
+ {s:"Wir sind stolz auf ___ Ergebnis unserer Arbeit.",a:"das",c:"Akk",r:"stolz auf + Akkusativ · das Ergebnis"},
+ {s:"Er nimmt an ___ Konferenz teil.",a:"der",c:"Dat",r:"teilnehmen an + Dativ · die Konferenz → der Konferenz"},
+ {s:"Die Lösung ___ Problems liegt auf der Hand.",a:"des",c:"Gen",r:"Genitivattribut · das Problem → des Problems"},
+ {s:"Sie leidet unter ___ Lärm der Baustelle.",a:"dem",c:"Dat",r:"leiden unter + Dativ · der Lärm → dem Lärm"},
+ {s:"Ich freue mich auf ___ Wochenende.",a:"das",c:"Akk",r:"sich freuen auf + Akkusativ (Zukunft) · das Wochenende"}
+];
+/* Lexikon: Nomen:Genus:Genitivform[:w = schwache Deklination, Form gilt auch für Akk/Dat] (feminin: ohne Genitivform) */
+const LEX_RAW=`Bus:m:Busses;Vermieter:m:Vermieters;Antrag:m:Antrags;Film:m:Films;Vertrag:m:Vertrags;Termin:m:Termins;Brief:m:Briefs;Bericht:m:Berichts;Chef:m:Chefs;Arzt:m:Arztes;Zug:m:Zuges;Park:m:Parks;Garten:m:Gartens;Keller:m:Kellers;Tisch:m:Tisches;Schreibtisch:m:Schreibtisches;Kühlschrank:m:Kühlschranks;Schlüssel:m:Schlüssels;Urlaub:m:Urlaubs;Abend:m:Abends;Unterricht:m:Unterrichts;Umzug:m:Umzugs;Lärm:m:Lärms;Streik:m:Streiks;Unfall:m:Unfalls;Konflikt:m:Konflikts;Verdacht:m:Verdachts;Plan:m:Plans;Vorschlag:m:Vorschlags;Wald:m:Waldes;See:m:Sees;Bahnhof:m:Bahnhofs;Supermarkt:m:Supermarkts;Kurs:m:Kurses;Wettbewerb:m:Wettbewerbs;Fehler:m:Fehlers;Erfolg:m:Erfolgs;Entwurf:m:Entwurfs;Kompromiss:m:Kompromisses;Zusammenhang:m:Zusammenhangs;Vortrag:m:Vortrags;Kaffee:m:Kaffees;Pullover:m:Pullovers;Mantel:m:Mantels;Rucksack:m:Rucksacks;Koffer:m:Koffers;Computer:m:Computers;Drucker:m:Druckers;Fernseher:m:Fernsehers;Stuhl:m:Stuhls;Schrank:m:Schranks;Teppich:m:Teppichs;Spiegel:m:Spiegels;Balkon:m:Balkons;Hund:m:Hundes;Bruder:m:Bruders;Vater:m:Vaters;Freund:m:Freundes;Lehrer:m:Lehrers;Gast:m:Gastes;Mieter:m:Mieters;Trainer:m:Trainers;Hausmeister:m:Hausmeisters;Bürgermeister:m:Bürgermeisters;Roman:m:Romans;Artikel:m:Artikels;Kommentar:m:Kommentars;Haushalt:m:Haushalts;Vorstand:m:Vorstands;Betriebsrat:m:Betriebsrats;Besuch:m:Besuchs;Studienplatz:m:Studienplatzes;Job:m:Jobs;Raum:m:Raums;Saal:m:Saals;Befund:m:Befunds;Trend:m:Trends;Vorwurf:m:Vorwurfs;Preis:m:Preises;Trick:m:Tricks;Zuschuss:m:Zuschusses;Pass:m:Passes;Ausweis:m:Ausweises;Bescheid:m:Bescheids;Platz:m:Platzes;Block:m:Blocks;Löffel:m:Löffels;Großvater:m:Großvaters;Eingang:m:Eingangs;Roller:m:Rollers;Hof:m:Hofs;Friseur:m:Friseurs;Laptop:m:Laptops;Weg:m:Weges;Fluss:m:Flusses;Rat:m:Rates;Sohn:m:Sohnes;Makler:m:Maklers;Anwalt:m:Anwalts;Mann:m:Mannes;Zahnarzt:m:Zahnarztes;Flug:m:Flugs;Service:m:Services;Zustand:m:Zustands;Text:m:Textes;Workshop:m:Workshops;Rhein:m:Rheins;Ausflug:m:Ausflugs;Partner:m:Partners;Instinkt:m:Instinkts;Redner:m:Redners;Stress:m:Stresses;Druck:m:Drucks;Vorgänger:m:Vorgängers;Regen:m:Regens;Sturm:m:Sturms;Schnee:m:Schnees;Protest:m:Protests;Widerstand:m:Widerstands;Monat:m:Monats;Zeitraum:m:Zeitraums;Krimi:m:Krimis;Brand:m:Brandes;Ausfall:m:Ausfalls;Stau:m:Staus;Hinweis:m:Hinweises;Vorfall:m:Vorfalls;Schauspieler:m:Schauspielers;Schuppen:m:Schuppens;Professor:m:Professors;Klimawandel:m:Klimawandels;Krieg:m:Krieges;Antragsteller:m:Antragstellers;Tag:m:Tages;Geburtstag:m:Geburtstags;Sieg:m:Sieges;Abschluss:m:Abschlusses;Feiertag:m:Feiertags;Begriff:m:Begriffs;Fund:m:Fundes;Verlust:m:Verlusts;Berg:m:Berges;Gutachter:m:Gutachters;Fall:m:Falls;Streit:m:Streits;Engpass:m:Engpasses;Mangel:m:Mangels;Mut:m:Mutes;Regenschirm:m:Regenschirms;Auftritt:m:Auftritts;Sommer:m:Sommers;Laden:m:Ladens;`+
+`Kollege:m:Kollegen:w;Kunde:m:Kunden:w;Nachbar:m:Nachbarn:w;Patient:m:Patienten:w;Präsident:m:Präsidenten:w;Junge:m:Jungen:w;Zeuge:m:Zeugen:w;Student:m:Studenten:w;Praktikant:m:Praktikanten:w;Tourist:m:Touristen:w;Experte:m:Experten:w;Kandidat:m:Kandidaten:w;Konkurrent:m:Konkurrenten:w;Assistent:m:Assistenten:w;Postbote:m:Postboten:w;`+
+`Wohnung:f;Rechnung:f;Kollegin:f;Firma:f;Prüfung:f;Entscheidung:f;Wand:f;Fensterbank:f;Frist:f;Maßnahme:f;Lage:f;Kritik:f;Antwort:f;Stelle:f;Reise:f;Konferenz:f;Sitzung:f;Ärztin:f;Lehrerin:f;Nachbarin:f;Chefin:f;Mutter:f;Schwester:f;Freundin:f;Kundin:f;Behörde:f;Abteilung:f;Regierung:f;Polizei:f;Stadt:f;Straße:f;Küche:f;Garage:f;Tür:f;Kirche:f;Schule:f;Bibliothek:f;Apotheke:f;Bäckerei:f;Bank:f;Jacke:f;Tasche:f;Brille:f;Lampe:f;Uhr:f;Zeitung:f;E-Mail:f;Nachricht:f;Einladung:f;Bewerbung:f;Kündigung:f;Präsentation:f;Ausstellung:f;Studie:f;Umfrage:f;Reform:f;Krise:f;Hitze:f;Kälte:f;Pandemie:f;Inflation:f;Kampagne:f;Software:f;Grenze:f;Umwelt:f;Mehrheit:f;Ausbildung:f;Qualität:f;Diskussion:f;Frage:f;Idee:f;Lösung:f;Methode:f;Strategie:f;Vereinbarung:f;Party:f;Feier:f;Hochzeit:f;Sprache:f;Grammatik:f;Aussprache:f;Versicherung:f;Abteilungsleiterin:f;Ministerin:f;Vermieterin:f;Steuererklärung:f;Ferienwohnung:f;Kindheit:f;Verspätung:f;Organisation:f;Arbeit:f;Annahme:f;Theorie:f;Sicherheit:f;Ernährung:f;Geschichte:f;Genehmigung:f;Umgebung:f;Insel:f;Erfahrung:f;Intuition:f;Gabel:f;Besucherin:f;Studentin:f;Straßenbahn:f;U-Bahn:f;Operation:f;Pause:f;Decke:f;Post:f;Anleitung:f;Tochter:f;Touristin:f;Interessentin:f;Familie:f;Patientin:f;Zukunft:f;Spinne:f;Dunkelheit:f;Situation:f;Leistung:f;Abfahrt:f;Gesundheit:f;Küste:f;Autobahn:f;Mannschaft:f;Kandidatin:f;Klasse:f;Rednerin:f;Professorin:f;Musik:f;Belastung:f;Einsamkeit:f;Krankheit:f;Warnung:f;Fahrt:f;Woche:f;Saison:f;Serie:f;Anzeige:f;Aussage:f;Band:f;Direktorin:f;Initiative:f;Nacht:f;Anfrage:f;Reklamation:f;Eröffnung:f;Technik:f;Tabelle:f;Liste:f;App:f;Bevölkerung:f;Kommission:f;Aufgabe:f;Gleichung:f;Dürre:f;Nachfrage:f;Lieferung:f;Zeit:f;Geduld:f;Energie:f;Lust:f;Motivation:f;Fernbedienung:f;Heizung:f;`+
+`Kind:n:Kindes;Ergebnis:n:Ergebnisses;Fenster:n:Fensters;Thema:n:Themas;Rathaus:n:Rathauses;Problem:n:Problems;Publikum:n:Publikums;Produkt:n:Produkts;Fahrrad:n:Fahrrads;Bett:n:Bettes;Urteil:n:Urteils;Mädchen:n:Mädchens;Wochenende:n:Wochenendes;Projekt:n:Projekts;Hotel:n:Hotels;Haus:n:Hauses;Auto:n:Autos;Büro:n:Büros;Team:n:Teams;Gespräch:n:Gesprächs;Angebot:n:Angebots;Geschenk:n:Geschenks;Konzert:n:Konzerts;Spiel:n:Spiels;Buch:n:Buches;Handy:n:Handys;Zimmer:n:Zimmers;Restaurant:n:Restaurants;Kino:n:Kinos;Museum:n:Museums;Krankenhaus:n:Krankenhauses;Gesetz:n:Gesetzes;Visum:n:Visums;Formular:n:Formulars;Dokument:n:Dokuments;Gutachten:n:Gutachtens;Klima:n:Klimas;Wetter:n:Wetters;Budget:n:Budgets;Jahr:n:Jahres;Semester:n:Semesters;Training:n:Trainings;Treffen:n:Treffens;Interview:n:Interviews;Meeting:n:Meetings;Paket:n:Pakets;Essen:n:Essens;Glas:n:Glases;Sofa:n:Sofas;Regal:n:Regals;Bild:n:Bildes;Foto:n:Fotos;Kleid:n:Kleides;Unternehmen:n:Unternehmens;Ministerium:n:Ministeriums;Gericht:n:Gerichts;Rezept:n:Rezepts;Studium:n:Studiums;Engagement:n:Engagements;Risiko:n:Risikos;Konzept:n:Konzepts;Programm:n:Programms;Seminar:n:Seminars;Theater:n:Theaters;Stadion:n:Stadions;Dorf:n:Dorfes;Meer:n:Meeres;Gebäude:n:Gebäudes;Flugzeug:n:Flugzeugs;Taxi:n:Taxis;Lob:n:Lobes;Praktikum:n:Praktikums;Stipendium:n:Stipendiums;Detail:n:Details;Verbot:n:Verbots;Kindergeld:n:Kindergelds;Wohngeld:n:Wohngelds;Gefühl:n:Gefühls;Navi:n:Navis;Verhalten:n:Verhaltens;Salz:n:Salzes;Messer:n:Messers;Boot:n:Boots;Kissen:n:Kissens;Bad:n:Bads;Telefon:n:Telefons;Beispiel:n:Beispiels;Paar:n:Paars;Befinden:n:Befindens;Abendessen:n:Abendessens;Glück:n:Glücks;Original:n:Originals;Modell:n:Modells;Gewitter:n:Gewitters;Zentrum:n:Zentrums;Video:n:Videos;Lied:n:Liedes;Jubiläum:n:Jubiläums;Wort:n:Wortes;Gemälde:n:Gemäldes;Ereignis:n:Ereignisses;Werkzeug:n:Werkzeugs;Gebirge:n:Gebirges;Rätsel:n:Rätsels;Geld:n:Geldes;Ladekabel:n:Ladekabels;Portemonnaie:n:Portemonnaies;Missverständnis:n:Missverständnisses;Festival:n:Festivals;Experiment:n:Experiments;Schwimmbad:n:Schwimmbads;Café:n:Cafés`;
+
+/* Satzmuster: [Satz mit ___ und {}, Fall, Begründung, Nomen] */
+const FRAMES=[
+["Ich warte seit einer Stunde auf ___ {}.","Akk","warten auf + Akkusativ","Bus,Antwort,Zug,Nachricht,Paket,Kollege,Ärztin,Taxi,Entscheidung,Gutachten,Lieferung"],
+["Hast du ___ {} schon gelesen?","Akk","Akkusativobjekt (was?)","Brief,Bericht,Artikel,Roman,Nachricht,E-Mail,Zeitung,Studie,Buch,Gutachten,Kommentar,Dokument"],
+["Wir besichtigen morgen ___ {}.","Akk","Akkusativobjekt (was?)","Wohnung,Haus,Büro,Museum,Ausstellung,Kirche,Stadion,Gebäude,Rathaus,Ferienwohnung"],
+["Er repariert ___ {} selbst.","Akk","Akkusativobjekt (was?)","Fahrrad,Drucker,Computer,Lampe,Tür,Stuhl,Auto,Handy,Fernseher,Uhr,Heizung"],
+["Sie unterschreibt ___ {} noch heute.","Akk","Akkusativobjekt (was?)","Vertrag,Antrag,Formular,Kündigung,Vereinbarung,Dokument,Brief,Bewerbung"],
+["Ich interessiere mich sehr für ___ {}.","Akk","sich interessieren für + Akkusativ","Thema,Projekt,Stelle,Ausstellung,Studie,Roman,Konzept,Programm,Seminar,Reform,Musik"],
+["Wir gehen gemeinsam durch ___ {}.","Akk","durch + Akkusativ","Park,Wald,Stadt,Dorf,Museum,Ausstellung,Garten,Gebäude,Tür"],
+["Ohne ___ {} gehe ich nicht aus dem Haus.","Akk","ohne + Akkusativ","Schlüssel,Jacke,Handy,Brille,Rucksack,Tasche,Mantel,Uhr,Regenschirm,Portemonnaie"],
+["Das Geschenk ist für ___ {}.","Akk","für + Akkusativ","Lehrerin,Kollege,Nachbarin,Bruder,Kind,Mutter,Vater,Chefin,Freund,Schwester,Mädchen,Junge,Großvater"],
+["Er stellt die Flasche in ___ {}.","Akk","Wechselpräposition, wohin? → Akkusativ","Kühlschrank,Küche,Keller,Regal,Schrank,Tasche,Rucksack"],
+["Sie legt die Unterlagen auf ___ {}.","Akk","Wechselpräposition, wohin? → Akkusativ","Schreibtisch,Tisch,Stuhl,Sofa,Regal,Fensterbank,Bett,Drucker"],
+["Ich denke oft an ___ {}.","Akk","denken an + Akkusativ","Urlaub,Reise,Konzert,Hochzeit,Abend,Gespräch,Freund,Schwester,Kindheit,Party,Zukunft"],
+["Er ärgert sich über ___ {}.","Akk","sich ärgern über + Akkusativ","Lärm,Fehler,Rechnung,Entscheidung,Kritik,Kommentar,Verspätung,Wetter,Ergebnis,Nachbar,Kollegin,Stau"],
+["Wir freuen uns schon auf ___ {}.","Akk","sich freuen auf + Akkusativ (etwas Kommendes)","Wochenende,Urlaub,Reise,Konzert,Party,Feier,Hochzeit,Treffen,Abend,Semester,Ausstellung,Sommer,Festival"],
+["Wir freuen uns sehr über ___ {}.","Akk","sich freuen über + Akkusativ (etwas, das schon da ist)","Geschenk,Einladung,Erfolg,Nachricht,Ergebnis,Angebot,Besuch,Lob,Sieg"],
+["Sie kümmert sich um ___ {}.","Akk","sich kümmern um + Akkusativ","Garten,Kind,Hund,Haushalt,Projekt,Organisation,Kunde,Patient,Gast,Rechnung,Steuererklärung"],
+["Er bewirbt sich um ___ {}.","Akk","sich bewerben um + Akkusativ","Stelle,Praktikum,Studienplatz,Ausbildung,Stipendium,Wohnung,Job"],
+["Sie konzentriert sich ganz auf ___ {}.","Akk","sich konzentrieren auf + Akkusativ","Prüfung,Arbeit,Gespräch,Präsentation,Projekt,Training,Studium,Vortrag,Interview,Aufgabe"],
+["Ich bitte ___ {} um Rat.","Akk","jemanden (Akk.) um etwas bitten","Kollege,Ärztin,Lehrer,Experte,Nachbarin,Vater,Freundin,Chef,Trainer,Anwalt"],
+["Kannst du bitte ___ {} schließen?","Akk","Akkusativobjekt (was?)","Fenster,Tür,Garage,Kühlschrank,Koffer,Rucksack"],
+["Wir mieten für den Sommer ___ {} am Meer.","Akk","Akkusativobjekt (was?)","Haus,Wohnung,Zimmer,Boot,Ferienwohnung"],
+["Sie verlässt ___ {} als Erste.","Akk","verlassen + Akkusativ","Raum,Büro,Sitzung,Konferenz,Party,Saal,Gebäude,Restaurant,Kino"],
+["Die Studie bestätigt ___ {}.","Akk","Akkusativobjekt (was?)","Zusammenhang,Verdacht,Annahme,Ergebnis,Theorie,Befund,Trend"],
+["Er reagiert gelassen auf ___ {}.","Akk","reagieren auf + Akkusativ","Kritik,Vorwurf,Frage,Kommentar,Nachricht,Entscheidung,Angebot,Vorschlag,Problem"],
+["Wir achten besonders auf ___ {}.","Akk","achten auf + Akkusativ","Qualität,Sicherheit,Aussprache,Grammatik,Umwelt,Preis,Ernährung,Detail"],
+["Er setzt sich neben ___ {}.","Akk","Wechselpräposition, wohin? → Akkusativ","Fenster,Tür,Kollegin,Bruder,Freund,Mädchen,Junge,Großvater"],
+["Er hängt das Poster über ___ {}.","Akk","Wechselpräposition, wohin? → Akkusativ","Bett,Sofa,Schreibtisch,Tür,Regal,Tisch"],
+["Die Regierung plant ___ {}.","Akk","Akkusativobjekt (was?)","Reform,Gesetz,Maßnahme,Verbot,Programm,Strategie,Kampagne,Projekt"],
+["Kennst du schon ___ {}?","Akk","kennen + Akkusativ","Ergebnis,Nachbarin,Kollege,Restaurant,Film,Rezept,Trick,Geschichte,Idee,Lösung,Lied"],
+["Ich kaufe ___ {} im Angebot.","Akk","Akkusativobjekt (was?)","Kühlschrank,Fernseher,Jacke,Mantel,Sofa,Koffer,Rucksack,Lampe,Handy,Teppich,Kleid,Pullover,Laptop"],
+["Wir laden ___ {} zur Feier ein.","Akk","jemanden (Akk.) einladen","Nachbar,Kollegin,Chef,Trainer,Lehrerin,Team,Vermieter,Schwester,Bruder,Hausmeister"],
+["Sie beantragt ___ {} beim Amt.","Akk","Akkusativobjekt (was?)","Visum,Zuschuss,Pass,Ausweis,Genehmigung,Kindergeld,Wohngeld"],
+["Er gewöhnt sich langsam an ___ {}.","Akk","sich gewöhnen an + Akkusativ","Klima,Arbeit,Lärm,Stadt,Kälte,Hitze,Umgebung,Sprache,Job,Team"],
+["Gegen ___ {} legt sie Widerspruch ein.","Akk","gegen + Akkusativ","Entscheidung,Bescheid,Urteil,Kündigung,Rechnung,Maßnahme"],
+["Wir fahren einmal um ___ {} herum.","Akk","um + Akkusativ","See,Platz,Block,Stadt,Dorf,Insel"],
+["Ich verlasse mich auf ___ {}.","Akk","sich verlassen auf + Akkusativ","Kollege,Kollegin,Team,Gefühl,Erfahrung,Intuition,Freund,Navi,Partner,Instinkt"],
+["Er erinnert sich gut an ___ {}.","Akk","sich erinnern an + Akkusativ","Abend,Reise,Gespräch,Lehrer,Hochzeit,Film,Unfall,Kindheit,Urlaub,Konzert"],
+["Wir diskutieren lange über ___ {}.","Akk","diskutieren über + Akkusativ","Problem,Vorschlag,Thema,Reform,Plan,Budget,Strategie,Konzept,Entwurf,Gesetz"],
+["Er kritisiert ___ {} scharf.","Akk","Akkusativobjekt (wen/was?)","Gesetz,Reform,Entscheidung,Plan,Vorschlag,Regierung,Verhalten,Urteil,Kampagne"],
+["Kannst du mir mal ___ {} geben?","Akk","geben: Sache im Akkusativ","Schlüssel,Glas,Salz,Brille,Tasche,Löffel,Gabel,Messer,Buch,Fernbedienung,Ladekabel"],
+["Wir sprechen morgen mit ___ {}.","Dat","mit + Dativ","Vermieter,Ärztin,Chef,Team,Kunde,Nachbarin,Lehrer,Abteilungsleiterin,Experte,Hausmeister"],
+["Ich gebe ___ {} ein Glas Wasser.","Dat","geben: Person im Dativ (wem?)","Kind,Gast,Patient,Kollegin,Mädchen,Junge,Großvater,Nachbar,Besucherin"],
+["Er hilft ___ {} beim Umzug.","Dat","helfen + Dativ","Nachbar,Kollegin,Bruder,Freundin,Schwester,Vater,Mutter,Student,Kollege"],
+["Ich danke ___ {} für die Unterstützung.","Dat","danken + Dativ","Kollegin,Team,Kollege,Chef,Publikum,Vorstand,Trainer,Ministerium,Betriebsrat,Nachbarin"],
+["Das Fahrrad gehört ___ {}.","Dat","gehören + Dativ","Mädchen,Junge,Nachbar,Kollegin,Bruder,Schwester,Hausmeister,Studentin,Student"],
+["Wir treffen uns vor ___ {}.","Dat","vor, wo? → Dativ","Rathaus,Bahnhof,Kino,Museum,Kirche,Bäckerei,Eingang,Hotel,Supermarkt,Bibliothek,Theater"],
+["Er fährt mit ___ {} zur Arbeit.","Dat","mit + Dativ","Fahrrad,Bus,Auto,Zug,Taxi,Straßenbahn,Roller,U-Bahn"],
+["Nach ___ {} gehen wir essen.","Dat","nach + Dativ","Unterricht,Sitzung,Konzert,Training,Kurs,Vortrag,Prüfung,Meeting,Seminar,Spiel,Film"],
+["Sie arbeitet seit Jahren bei ___ {}.","Dat","bei + Dativ","Firma,Polizei,Bank,Zeitung,Versicherung,Stadt,Regierung,Ministerium,Bäckerei"],
+["Seit ___ {} fühle ich mich wohler.","Dat","seit + Dativ","Umzug,Urlaub,Training,Gespräch,Operation,Entscheidung,Pause"],
+["Er widerspricht ___ {} offen.","Dat","widersprechen + Dativ","Chef,Chefin,Kollege,Experte,Ministerin,Präsident,Vorschlag,Lehrer"],
+["Das Buch liegt unter ___ {}.","Dat","Wechselpräposition, wo? → Dativ","Bett,Sofa,Tisch,Stuhl,Schreibtisch,Zeitung,Jacke,Kissen,Regal"],
+["Die Katze schläft auf ___ {}.","Dat","Wechselpräposition, wo? → Dativ","Sofa,Bett,Teppich,Stuhl,Fensterbank,Balkon,Kissen,Schrank,Decke,Tisch"],
+["Die Kinder spielen in ___ {}.","Dat","Wechselpräposition, wo? → Dativ","Garten,Park,Hof,Zimmer,Küche,Wald,Schule,Wohnung,Keller"],
+["Sie wohnt direkt gegenüber ___ {}.","Dat","gegenüber + Dativ","Bahnhof,Kirche,Schule,Park,Krankenhaus,Rathaus,Bäckerei,Bibliothek,Stadion,Theater"],
+["Er kommt gerade aus ___ {}.","Dat","aus + Dativ","Büro,Kino,Küche,Keller,Krankenhaus,Supermarkt,Bibliothek,Apotheke,Sitzung,Garten,Bad"],
+["Ich komme gerade von ___ {}.","Dat","von + Dativ","Arzt,Ärztin,Training,Friseur,Bäckerei,Bank,Post,Sitzung,Konferenz,Zahnarzt"],
+["Außer ___ {} wusste niemand davon.","Dat","außer + Dativ","Chef,Chefin,Kollege,Nachbarin,Bruder,Team,Vorstand,Hausmeister"],
+["Das Treffen findet in ___ {} statt.","Dat","Wechselpräposition, wo? → Dativ","Rathaus,Büro,Hotel,Restaurant,Bibliothek,Kirche,Schule,Saal,Raum,Ministerium,Museum,Café"],
+["Der Schlüssel liegt neben ___ {}.","Dat","Wechselpräposition, wo? → Dativ","Telefon,Handy,Laptop,Lampe,Brille,Tasche,Drucker,Spiegel,Tür"],
+["Sie folgt ___ {} bis zum Ende.","Dat","folgen + Dativ","Weg,Straße,Fluss,Anleitung,Rat,Plan,Beispiel"],
+["Er begegnet ___ {} im Treppenhaus.","Dat","begegnen + Dativ","Nachbarin,Nachbar,Hausmeister,Vermieter,Postbote,Mieter,Kollegin,Kind"],
+["Das Essen schmeckt ___ {} nicht.","Dat","schmecken + Dativ (wem?)","Kind,Gast,Junge,Mädchen,Vater,Kollegin,Hund,Großvater,Patient"],
+["Die Jacke passt ___ {} nicht mehr.","Dat","passen + Dativ (wem?)","Junge,Mädchen,Bruder,Sohn,Tochter,Kind,Vater,Schwester"],
+["Ich empfehle ___ {} dieses Restaurant.","Dat","empfehlen: Person im Dativ","Kundin,Kunde,Gast,Kollege,Freundin,Tourist,Touristin,Nachbar,Studentin"],
+["Sie zeigt ___ {} die Wohnung.","Dat","zeigen: Person im Dativ","Interessentin,Gast,Mieter,Makler,Kunde,Familie,Paar,Besucherin"],
+["Er schickt ___ {} die Unterlagen.","Dat","schicken: Empfänger im Dativ","Behörde,Kollegin,Chef,Versicherung,Bank,Anwalt,Kunde,Abteilung,Vermieterin"],
+["Die Ärztin rät ___ {} zu mehr Bewegung.","Dat","raten + Dativ","Patient,Patientin,Mann,Kind,Junge,Großvater,Student"],
+["Er hat Angst vor ___ {}.","Dat","Angst haben vor + Dativ","Prüfung,Hund,Zahnarzt,Gespräch,Operation,Zukunft,Spinne,Flug,Dunkelheit,Entscheidung"],
+["Das hängt ganz von ___ {} ab.","Dat","abhängen von + Dativ","Wetter,Preis,Ergebnis,Entscheidung,Budget,Termin,Situation,Lage,Chef,Gespräch"],
+["Sie ist mit ___ {} sehr zufrieden.","Dat","zufrieden mit + Dativ","Ergebnis,Wohnung,Job,Service,Arbeit,Leistung,Hotel,Kompromiss,Lösung,Kurs"],
+["Er erkundigt sich nach ___ {}.","Dat","sich erkundigen nach + Dativ","Abfahrt,Preis,Weg,Ergebnis,Termin,Befinden,Gesundheit,Zustand"],
+["Wir beschäftigen uns intensiv mit ___ {}.","Dat","sich beschäftigen mit + Dativ","Thema,Problem,Frage,Studie,Text,Konzept,Entwurf,Gutachten,Grammatik"],
+["Sie nimmt an ___ {} teil.","Dat","teilnehmen an + Dativ","Kurs,Wettbewerb,Sitzung,Konferenz,Seminar,Workshop,Umfrage,Diskussion,Training,Studie,Projekt"],
+["Die Stadt liegt direkt an ___ {}.","Dat","an, wo? → Dativ","Rhein,Meer,See,Fluss,Grenze,Küste,Autobahn"],
+["Bei ___ {} war ich leider nicht dabei.","Dat","bei + Dativ","Gespräch,Sitzung,Feier,Party,Konzert,Spiel,Treffen,Abendessen,Ausflug,Hochzeit"],
+["Der Erfolg ist vor allem ___ {} zu verdanken.","Dat","verdanken: Person/Ursache im Dativ","Engagement,Team,Trainer,Kollegin,Strategie,Kampagne,Vorstand,Publikum,Glück"],
+["Sie gratuliert ___ {} zum Erfolg.","Dat","gratulieren + Dativ","Team,Kollege,Kollegin,Trainer,Mannschaft,Bruder,Präsident,Kandidat,Kandidatin"],
+["Er erzählt ___ {} eine Geschichte.","Dat","erzählen: Person im Dativ","Kind,Publikum,Mädchen,Junge,Tochter,Sohn,Gast,Klasse"],
+["Ich vertraue ___ {} voll und ganz.","Dat","vertrauen + Dativ","Kollegin,Team,Urteil,Ärztin,Freund,Partner,Instinkt,Gefühl"],
+["Wir haben ___ {} lange zugehört.","Dat","zuhören + Dativ","Vortrag,Redner,Rednerin,Gespräch,Professorin,Experte,Musik"],
+["Sie leidet sehr unter ___ {}.","Dat","leiden unter + Dativ","Lärm,Hitze,Stress,Belastung,Druck,Situation,Einsamkeit,Kälte"],
+["Das neue Modell unterscheidet sich kaum von ___ {}.","Dat","sich unterscheiden von + Dativ","Original,Vorgänger,Konkurrent,Modell"],
+["Er unterscheidet sich kaum von ___ {}.","Dat","sich unterscheiden von + Dativ","Bruder,Vater,Schwester,Kollege"],
+["Wegen ___ {} fällt das Spiel aus.","Gen","wegen + Genitiv","Regen,Wetter,Streik,Hitze,Sturm,Unfall,Krankheit,Gewitter,Schnee"],
+["Trotz ___ {} hält die Ministerin am Plan fest.","Gen","trotz + Genitiv","Kritik,Protest,Widerstand,Gutachten,Risiko,Warnung,Urteil,Umfrage,Streik"],
+["Während ___ {} bleibt das Handy aus.","Gen","während + Genitiv","Sitzung,Prüfung,Unterricht,Vortrag,Konzert,Film,Gespräch,Meeting,Fahrt,Essen"],
+["Innerhalb ___ {} muss der Antrag eingehen.","Gen","innerhalb + Genitiv","Frist,Monat,Woche,Jahr,Semester,Zeitraum"],
+["Außerhalb ___ {} ist es viel ruhiger.","Gen","außerhalb + Genitiv","Stadt,Zentrum,Dorf,Saison"],
+["Statt ___ {} nimmt sie lieber das Fahrrad.","Gen","statt + Genitiv","Auto,Bus,Zug,Taxi,Straßenbahn,U-Bahn,Roller"],
+["Das Ende ___ {} war überraschend.","Gen","Genitivattribut (wessen?)","Film,Roman,Spiel,Geschichte,Serie,Buch,Saison,Krimi"],
+["Die Qualität ___ {} ist hervorragend.","Gen","Genitivattribut (wessen?)","Produkt,Ausbildung,Essen,Service,Hotel,Software,Kaffee,Arbeit"],
+["Die Ursache ___ {} ist noch unklar.","Gen","Genitivattribut (wessen?)","Konflikt,Unfall,Fehler,Brand,Problem,Krankheit,Krise,Verspätung,Ausfall,Stau"],
+["Aufgrund ___ {} ermittelt die Polizei.","Gen","aufgrund + Genitiv","Verdacht,Hinweis,Anzeige,Unfall,Vorfall,Aussage,Video"],
+["Der Name ___ {} fällt mir nicht ein.","Gen","Genitivattribut (wessen?)","Hotel,Restaurant,Film,Straße,Kollegin,Kollege,Buch,Lehrer,Band,Lied,Schauspieler"],
+["Das Dach ___ {} muss repariert werden.","Gen","Genitivattribut (wessen?)","Haus,Gebäude,Kirche,Garage,Schule,Bahnhof,Stadion,Rathaus,Schuppen"],
+["Die Rede ___ {} war kurz und klar.","Gen","Genitivattribut (wessen?)","Präsident,Ministerin,Chef,Kandidat,Bürgermeister,Direktorin,Trainer,Professor"],
+["Das Ziel ___ {} ist ehrgeizig.","Gen","Genitivattribut (wessen?)","Projekt,Kampagne,Reform,Programm,Plan,Strategie,Regierung,Unternehmen,Mannschaft,Initiative"],
+["Die Folgen ___ {} sind deutlich spürbar.","Gen","Genitivattribut (wessen?)","Klimawandel,Krise,Pandemie,Inflation,Reform,Entscheidung,Krieg,Sturm,Streik"],
+["Die Unterschrift ___ {} fehlt noch.","Gen","Genitivattribut (wessen?)","Mieter,Vermieterin,Kunde,Kundin,Chef,Antragsteller,Patient,Vater,Mutter"],
+["Im Laufe ___ {} wurde es immer lauter.","Gen","im Laufe + Genitiv","Abend,Nacht,Tag,Feier,Party,Sitzung,Diskussion,Konzert"],
+["Bezüglich ___ {} melden wir uns bald.","Gen","bezüglich + Genitiv","Antrag,Bewerbung,Anfrage,Termin,Rechnung,Angebot,Vertrag,Projekt,Reklamation"],
+["Anlässlich ___ {} gibt es ein großes Fest.","Gen","anlässlich + Genitiv","Jubiläum,Geburtstag,Hochzeit,Eröffnung,Sieg,Abschluss,Feiertag"],
+["Die Bedeutung ___ {} ist umstritten.","Gen","Genitivattribut (wessen?)","Begriff,Wort,Studie,Ergebnis,Urteil,Fund,Text,Gemälde,Ereignis"],
+["Mithilfe ___ {} sparen wir viel Zeit.","Gen","mithilfe + Genitiv","Software,Programm,Methode,Werkzeug,Technik,Tabelle,Liste,Assistent,App"],
+["Ungeachtet ___ {} investiert sie weiter.","Gen","ungeachtet + Genitiv","Risiko,Krise,Warnung,Verlust,Kritik,Rat,Gutachten,Lage"],
+["Jenseits ___ {} beginnt ein anderes Land.","Gen","jenseits + Genitiv","Grenze,Fluss,Gebirge,Meer,Berg,Wald"],
+["Die Meinung ___ {} ist eindeutig.","Gen","Genitivattribut (wessen?)","Mehrheit,Experte,Ärztin,Publikum,Vorstand,Gericht,Bevölkerung,Kommission,Gutachter"],
+["Die Lösung ___ {} war einfacher als gedacht.","Gen","Genitivattribut (wessen?)","Rätsel,Problem,Aufgabe,Konflikt,Fall,Streit,Gleichung"],
+["Infolge ___ {} stiegen die Preise.","Gen","infolge + Genitiv","Krise,Inflation,Krieg,Dürre,Streik,Engpass,Mangel,Nachfrage"],
+["Das Büro ___ {} ist am Ende des Flurs.","Gen","Genitivattribut (wessen?)","Kollege,Kollegin,Chef,Chefin,Direktorin,Professor,Hausmeister,Praktikant,Abteilungsleiterin"],
+["___ {} hat zehn Minuten Verspätung.","Nom","Subjekt (wer/was?)","Zug,Bus,Flugzeug,Straßenbahn,U-Bahn,Taxi,Lieferung,Paket"],
+["___ {} ist leider schon vergeben.","Nom","Subjekt (wer/was?)","Wohnung,Zimmer,Stelle,Termin,Platz,Job,Praktikum,Studienplatz,Tisch"],
+["Mir gefällt ___ {} sehr gut.","Nom","gefallen: die Sache ist Subjekt (Nominativ)","Kleid,Jacke,Film,Idee,Vorschlag,Wohnung,Hotel,Musik,Lied,Buch,Mantel,Bild"],
+["Mir fehlt leider ___ {} dazu.","Nom","fehlen: die Sache ist Subjekt (Nominativ)","Mut,Zeit,Geld,Geduld,Energie,Lust,Erfahrung,Motivation"],
+["Wo ist eigentlich ___ {}?","Nom","Subjekt (wer/was?)","Schlüssel,Brille,Handy,Fernbedienung,Rucksack,Ausweis,Tasche,Ladekabel,Portemonnaie,Regenschirm"],
+["Ihm ist ___ {} sehr peinlich.","Nom","Subjekt (was ist peinlich?)","Fehler,Situation,Verhalten,Auftritt,Foto,Video,Missverständnis,Frage"],
+["Heute beginnt endlich ___ {}.","Nom","Subjekt (wer/was?)","Urlaub,Semester,Ausstellung,Saison,Festival,Konferenz,Training,Kurs,Sommer"],
+["Gestern ist ___ {} angekommen.","Nom","Subjekt (wer/was?)","Paket,Brief,Lieferung,Rechnung,Gast,Zug,Besuch"],
+["Leider hat ___ {} nicht funktioniert.","Nom","Subjekt (wer/was?)","Plan,Idee,Trick,Drucker,Methode,Software,Heizung,Experiment,Fernbedienung"],
+["Morgen öffnet ___ {} wieder.","Nom","Subjekt (wer/was?)","Museum,Bibliothek,Restaurant,Schwimmbad,Bäckerei,Kino,Laden,Café,Theater,Apotheke"]
+];
+const LEX={};
+for(const e of LEX_RAW.split(";")){ if(!e) continue; const [n,g,gen,w]=e.split(":"); LEX[n]={g,gen:gen||n,weak:w==="w"}; }
+const ARTS={Nom:{m:"der",f:"die",n:"das"},Akk:{m:"den",f:"die",n:"das"},Dat:{m:"dem",f:"der",n:"dem"},Gen:{m:"des",f:"der",n:"des"}};
+function buildCases(){
+  const out=[];
+  for(const [t,c,r,list] of FRAMES) for(const n of list.split(",")){
+    const L=LEX[n]; if(!L){ console.warn("Lexikon fehlt:",n); continue; }
+    const form=c==="Nom"?n:(c==="Gen"||L.weak)?L.gen:n;
+    const a=ARTS[c][L.g], na=ARTS.Nom[L.g];
+    out.push({s:t.replace("{}",form),a,c,r:`${r} · ${na} ${n}`+((a!==na||form!==n)?` → ${a} ${form}`:"")});
+  }
+  return out;
+}
+
+{ const have=new Set(CASES.map(q=>q.s)); for(const q of buildCases()) if(!have.has(q.s)){ have.add(q.s); CASES.push(q); } }
+const CASE_NAME={Nom:"Nominativ",Akk:"Akkusativ",Dat:"Dativ",Gen:"Genitiv"};
+
+/* Level & Titel */
+const TITLES=[[1,"Artikel-Azubi"],[5,"Genus-Geselle"],[10,"Kasus-Kenner"],[15,"Grammatik-Profi"],[20,"Dativ-Meister"],[25,"Genitiv-Virtuose"],[30,"Der-Die-Das-Legende"]];
+const xpFor = L => 50*L*(L-1);          // Gesamt-XP, um Level L zu erreichen
+function levelOf(xp){let L=1; while(xpFor(L+1)<=xp) L++; return L;}
+function titleOf(L){let t=TITLES[0][1]; for(const [l,n] of TITLES) if(L>=l) t=n; return t;}
+const DAILY_GOAL=150;
+
+const BADGES=[
+ {id:"first",n:"Erste Runde",d:"1 Spiel beendet",t:p=>p.games>=1},
+ {id:"c10",n:"Kombo 10",d:"10 richtig in Folge",t:p=>p.bestCombo>=10},
+ {id:"c25",n:"Kombo 25",d:"25 richtig in Folge",t:p=>p.bestCombo>=25},
+ {id:"s3",n:"Dranbleiber",d:"3 Tage Serie",t:p=>p.bestStreak>=3},
+ {id:"s7",n:"Wochenheld",d:"7 Tage Serie",t:p=>p.bestStreak>=7},
+ {id:"w100",n:"Hundert",d:"100 Antworten richtig",t:p=>p.correct>=100},
+ {id:"m50",n:"Sammler",d:"50 Wörter gemeistert",t:p=>mastered(p)>=50},
+ {id:"dat",n:"Dativ-Profi",d:"25× Dativ richtig",t:p=>(p.caseOk?.Dat||0)>=25},
+ {id:"gen",n:"Genitiv-Gourmet",d:"15× Genitiv richtig",t:p=>(p.caseOk?.Gen||0)>=15},
+ {id:"exc",n:"Ausnahme-Jäger",d:"10 Ausnahmen richtig",t:p=>(p.excOk||0)>=10},
+ {id:"l10",n:"Level 10",d:"Kasus-Kenner",t:p=>levelOf(p.xp)>=10},
+ {id:"c1",n:"C1-Kopf",d:"30 C1-Wörter gemeistert",t:p=>mastered(p,"C1")>=30}
+];
+
+/* ============================== STATE ============================== */
+const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
+function weekKey(d=new Date()){const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const day=t.getUTCDay()||7;t.setUTCDate(t.getUTCDate()+4-day);const y=new Date(Date.UTC(t.getUTCFullYear(),0,1));return t.getUTCFullYear()+"-W"+String(Math.ceil(((t-y)/864e5+1)/7)).padStart(2,"0");}
+function blankProfile(name){return {name,xp:0,weekXP:0,weekKey:weekKey(),dayXP:0,dayKey:today(),streak:0,bestStreak:0,lastDay:"",games:0,correct:0,total:0,bestCombo:0,caseOk:{},excOk:0,words:{},badges:[],updatedAt:0};}
+function mastered(p,lv){let n=0;for(const [w,s] of Object.entries(p.words||{})){if(s[0]>=3 && (!lv||WORD_BY[w]?.lv===lv)) n++;}return n;}
+function weakWords(p){return Object.entries(p.words||{}).filter(([w,s])=>s[0]===0 && s[2]>0 && WORD_BY[w]).map(([w])=>WORD_BY[w]);}
+
+const S={me:null,view:"home",niveau:"mix",game:null};
+const LS_KEY="artikel-arena-local";
+function lsGet(k){try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+try{const n=localStorage.getItem("aa-niveau"); if(n) S.niveau=n;}catch(e){}
+
+/* ============================== HELPERS ============================== */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;};
+let toastT; function toast(msg){const t=$("#toast");t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2600);}
+const ICON={
+ flame:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 22c4 0 7-2.7 7-7 0-3.5-2.5-6-4-8-.3 2-1.3 3.2-2.5 3.5C13 7 11.5 4 9 2c.3 3-3 5.8-3 10 0 5.5 2.6 10 6 10z" fill="var(--gold)" stroke="var(--gold)"/></svg>`
+};
+
+/* ============================== RENDER ============================== */
+function render(){
+  const app=$("#app");
+  if(S.view==="onboard") return renderOnboard(app);
+  if(S.view==="game") return renderGame(app);
+  if(S.view==="result") return renderResult(app);
+  if(S.view==="rename") return renderRename(app);
+  renderHome(app);
+}
+
+function topBar(){
+  const p=S.me;
+  return `<div class="top"><div class="brand"><i class="d1">der</i><i>·</i><i class="d2">die</i><i>·</i><i class="d3">das</i>&nbsp;<span>Arena</span></div><span class="spacer"></span>
+  ${p?`<span class="chip" title="Tage in Folge gespielt">${ICON.flame}<span class="mono">${currentStreak(p)}</span></span>`:""}</div>`;
+}
+function currentStreak(p){ if(!p.lastDay) return 0; const y=new Date(); y.setDate(y.getDate()-1); const yk=y.getFullYear()+"-"+String(y.getMonth()+1).padStart(2,"0")+"-"+String(y.getDate()).padStart(2,"0"); return (p.lastDay===today()||p.lastDay===yk)?p.streak:0; }
+
+function renderOnboard(app){
+  app.innerHTML=`${topBar()}
+  <div class="panel onb">
+    <div class="trio"><span>der</span><span>die</span><span>das</span></div>
+    <h2>Willkommen in der Arena</h2>
+    <p class="muted" style="margin:0">Trainiere Artikel und Fälle in kurzen Runden, sammle XP und steig im Level auf. Wie sollen wir dich nennen?</p>
+    <label class="label" for="nick">Dein Name</label>
+    <input id="nick" maxlength="24" autocomplete="nickname" placeholder="z. B. Ana" value="${esc(S.suggestName||"")}">
+    <button class="btn primary" id="startBtn">Los geht's</button>
+  </div>`;
+  const go=()=>{const n=$("#nick").value.trim().slice(0,24); if(!n){$("#nick").focus();return;} S.me=blankProfile(n); saveMe(); S.view="home"; render();};
+  $("#startBtn").onclick=go; $("#nick").onkeydown=e=>{if(e.key==="Enter")go();};
+}
+
+function renderHome(app){
+  const p=S.me, L=levelOf(p.xp), cur=xpFor(L), nxt=xpFor(L+1), pct=Math.min(100,(p.xp-cur)/(nxt-cur)*100);
+  const dayXP=p.dayKey===today()?p.dayXP:0, gpct=Math.min(100,dayXP/DAILY_GOAL*100);
+  const C=2*Math.PI*28, weak=weakWords(p).length;
+  const nv=S.niveau;
+  app.innerHTML=`${topBar()}
+  <section class="status" aria-label="Dein Fortschritt">
+    <div class="lvl" aria-label="Level ${L}">
+      <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="28" fill="none" stroke="var(--sunk)" stroke-width="6"/><circle cx="32" cy="32" r="28" fill="none" stroke="var(--gold)" stroke-width="6" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct/100)}"/></svg>
+      <b>${L}</b>
+    </div>
+    <div class="who">
+      <h3>${esc(p.name)}</h3>
+      <div class="row"><span>${titleOf(L)}</span><span class="mono muted">${p.xp-cur} / ${nxt-cur} XP</span></div>
+      <div class="bar" role="progressbar" aria-valuenow="${Math.round(pct)}" aria-valuemin="0" aria-valuemax="100"><span style="width:${pct}%"></span></div>
+    </div>
+    <div class="goal"><span class="label">Tagesziel</span><div class="bar"><span style="width:${gpct}%"></span></div><span class="mono">${dayXP}/${DAILY_GOAL}</span></div>
+  </section>
+
+  <section class="modes" aria-label="Spielmodi">
+    <div class="levels"><span class="label">Niveau</span>
+      ${["B1","B2","C1","mix"].map(v=>`<button class="pill" data-nv="${v}" aria-pressed="${nv===v}">${v==="mix"?"Gemischt":v}</button>`).join("")}
+    </div>
+    <button class="mode" data-mode="blitz"><span class="ico blitz">60s</span><span><h3>Blitzrunde</h3><p>Der, die oder das? So viele Wörter wie möglich in 60 Sekunden.</p></span><span class="go">›</span></button>
+    <button class="mode" data-mode="fall"><span class="ico fall">Fall</span><span><h3>Fall-Fallen</h3><p>10 Sätze aus ${CASES.length}: der, den, dem oder des? Nominativ bis Genitiv. ${Object.keys(p.caseSeen||{}).length} schon gespielt.</p></span><span class="go">›</span></button>
+    <button class="mode" data-mode="tresor" ${weak?"":"disabled"}><span class="ico tresor mono">${weak}</span><span><h3>Problemwörter</h3><p>${weak?"Übe die Wörter, die du falsch hattest, bis sie sitzen.":"Noch leer. Falsche Wörter landen automatisch hier."}</p></span><span class="go">›</span></button>
+  </section>
+
+  <section class="panel" aria-label="Deine Bestwerte">
+    <div class="panel-head"><h2>Deine Bestwerte</h2></div>
+    <div class="pstats">
+      <div><span class="label">Diese Woche</span><b class="mono">${p.weekKey===weekKey()?p.weekXP:0} XP</b></div>
+      <div><span class="label">Beste Blitzrunde</span><b class="mono">${p.bestBlitz||0} XP</b></div>
+      <div><span class="label">Beste Kombo</span><b class="mono">${p.bestCombo}</b></div>
+      <div><span class="label">Trefferquote</span><b class="mono">${p.total?Math.round(p.correct/p.total*100)+" %":"–"}</b></div>
+      <div><span class="label">Längste Serie</span><b class="mono">${p.bestStreak||0} Tage</b></div>
+      <div><span class="label">Gespielte Runden</span><b class="mono">${p.games}</b></div>
+    </div>
+    <p class="note">Dein Fortschritt wird in diesem Browser gespeichert. Spiel deshalb immer auf demselben Gerät und im selben Browser.</p>
+  </section>
+
+  <section class="panel" aria-label="Wortsammlung">
+    <div class="panel-head"><h2>Wortsammlung</h2><span class="mono muted">${mastered(p)} / ${WORDS.length}</span></div>
+    <div class="album">
+      ${["B1","B2","C1"].map(lv=>{const tot=WORDS.filter(w=>w.lv===lv).length, m=mastered(p,lv);return `<div class="row"><span><b>${lv}</b> <span class="muted">gemeistert</span></span><span class="mono">${m}/${tot}</span></div><div class="seg"><span style="width:${m/tot*100}%;background:${lv==="B1"?"var(--das)":lv==="B2"?"var(--der)":"var(--die)"}"></span></div>`;}).join("")}
+      <p class="note">Ein Wort gilt als gemeistert, wenn du es dreimal hintereinander richtig hattest.</p>
+    </div>
+  </section>
+
+  <section class="panel" aria-label="Abzeichen">
+    <div class="panel-head"><h2>Abzeichen</h2><span class="mono muted">${p.badges.length} / ${BADGES.length}</span></div>
+    <div class="badges">${BADGES.map(b=>{const on=p.badges.includes(b.id);return `<div class="badge ${on?"on":""}"><span class="medal">${on?"★":"·"}</span><b>${b.n}</b><small>${b.d}</small></div>`;}).join("")}</div>
+  </section>
+  <button class="btn" id="rename" style="align-self:center">Namen ändern</button>`;
+
+  app.querySelectorAll("[data-nv]").forEach(b=>b.onclick=()=>{S.niveau=b.dataset.nv;try{localStorage.setItem("aa-niveau",S.niveau);}catch(e){}render();});
+  app.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>startGame(b.dataset.mode));
+  $("#rename").onclick=()=>{S.view="rename";render();};
+}
+function renderRename(app){
+  app.innerHTML=`${topBar()}<div class="panel onb"><h2>Namen ändern</h2><input id="nick" maxlength="24" value="${esc(S.me.name)}"><div class="btns"><button class="btn" id="cancel">Abbrechen</button><button class="btn primary" id="save">Speichern</button></div></div>`;
+  $("#cancel").onclick=()=>{S.view="home";render();};
+  $("#save").onclick=()=>{const n=$("#nick").value.trim().slice(0,24); if(!n) return; S.me.name=n; saveMe(); S.view="home"; render(); toast("Name gespeichert");};
+}
+
+/* ============================== SPIEL ============================== */
+function poolWords(){ return S.niveau==="mix"?WORDS:WORDS.filter(w=>w.lv===S.niveau); }
+function pickWord(g){
+  const weak=weakWords(S.me).filter(w=>w!==g.last && (S.niveau==="mix"||w.lv===S.niveau));
+  let item;
+  if(weak.length && Math.random()<.3) item=weak[Math.random()*weak.length|0];
+  else { const pool=poolWords(); do{ item=pool[Math.random()*pool.length|0]; }while(item===g.last && pool.length>1); }
+  g.last=item; return item;
+}
+function startGame(mode){
+  const g={mode,score:0,xp:0,combo:0,best:0,ok:0,n:0,mistakes:[],qi:0,locked:false,feedback:null,caseOk:{},excOk:0,wordUpd:{}};
+  if(mode==="blitz"){ g.time=60; g.left=60; }
+  if(mode==="fall"){ const seen=S.me.caseSeen||{}; g.qs=shuffle(CASES.map((q,i)=>({q,i,n:seen[q.s]||0}))).sort((a,b)=>a.n-b.n).slice(0,10).map(x=>x.q); }
+  if(mode==="tresor"){ g.qs=shuffle(weakWords(S.me)).slice(0,15); }
+  S.game=g; S.view="game"; nextQ(); render();
+  if(mode==="blitz"){ g.t0=performance.now(); g.paused=0; g.timer=setInterval(tick,100); }
+}
+function tick(){
+  const g=S.game; if(!g||g.mode!=="blitz") return;
+  if(g.pauseAt) return;
+  g.left=Math.max(0,g.time-(performance.now()-g.t0-g.paused)/1000);
+  const b=$("#tbar"); if(b) b.style.width=(g.left/g.time*100)+"%";
+  const t=$("#tleft"); if(t) t.textContent=Math.ceil(g.left)+" s";
+  if(g.left<=0) endGame();
+}
+function nextQ(){
+  const g=S.game; g.feedback=null; g.locked=false;
+  if(g.mode==="blitz") g.cur=pickWord(g);
+  else { if(g.qi>=g.qs.length) return endGame(true); g.cur=g.qs[g.qi]; }
+}
+function renderGame(app){
+  const g=S.game, isFall=g.mode==="fall";
+  const prog=g.mode==="blitz"?(g.left/g.time*100):(g.qi/g.qs.length*100);
+  const fb=g.feedback;
+  let body="";
+  if(isFall){
+    const q=g.cur; const parts=q.s.split("___");
+    let fill=fb?fb.answer:"";
+    if(fill && parts[0]==="") fill=fill[0].toUpperCase()+fill.slice(1);
+    body=`<span class="label tag">Satz ${g.qi+1} / ${g.qs.length}</span>
+      <p class="sentence">${esc(parts[0])}<span class="blank ${fb?(fb.ok?"ok":"bad"):""}">${fb?esc(fill):"&nbsp;"}</span>${esc(parts[1])}</p>
+      ${fb?`<p class="hint">${fb.ok?"Richtig!":"Richtig wäre <b>"+esc(q.a)+"</b>."} <span class="muted">${CASE_NAME[q.c]}:</span> ${esc(q.r)}</p>`:""}`;
+  } else {
+    const it=g.cur;
+    body=`<span class="label tag">${it.lv}</span>
+      <div class="word">${fb?`<span class="art" style="color:var(--${ART[it.g]})">${ART[it.g]}</span>`:""}${esc(it.w)}</div>
+      ${fb&&!fb.ok?`<p class="hint">${explain(it)}</p>`:""}`;
+  }
+  const keys=isFall?["der","die","das","den","dem","des"]:["der","die","das"];
+  const needNext=fb && (isFall || (!fb.ok));
+  app.innerHTML=`<div class="game">
+    <div class="ghead"><button class="x" id="quit" aria-label="Runde beenden">×</button>
+      <div class="bar ${g.mode}"><span id="tbar" style="width:${prog}%"></span></div>
+      <span class="mono" id="tleft">${g.mode==="blitz"?Math.ceil(g.left)+" s":(g.qi)+"/"+g.qs.length}</span></div>
+    <div class="gstats"><span class="mono"><b>${g.xp}</b> XP</span><span class="combo">${g.combo>=3?"Kombo ×"+g.combo:""}</span></div>
+    <div class="card ${fb?(fb.ok?"ok":"bad"):""}" aria-live="polite">${body}</div>
+    ${needNext?`<button class="next" id="next">Weiter</button><div class="kbd">Leertaste oder Enter</div>`
+      :`<div class="keys ${isFall?"six":""}">${keys.map((k,i)=>`<button class="key k-${k}" data-a="${k}" ${fb?"disabled":""}>${k}</button>`).join("")}</div>
+       <div class="kbd">${isFall?"":"Tastatur: 1 = der · 2 = die · 3 = das"}</div>`}
+  </div>`;
+  $("#quit").onclick=()=>endGame(false,true);
+  app.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>answer(b.dataset.a));
+  const nb=$("#next"); if(nb){ nb.onclick=cont; nb.focus(); }
+}
+function cont(){ const g=S.game; if(!g||!g.feedback) return;
+  if(g.pauseAt){ g.paused+=performance.now()-g.pauseAt; g.pauseAt=0; }
+  if(g.mode!=="blitz") g.qi++;
+  nextQ(); if(S.view==="game") render(); }
+function bumpWord(item,ok){
+  const w=S.me.words[item.w]||[0,0,0]; // [box, richtig, falsch]
+  const nw=ok?[Math.min(5,w[0]+1),w[1]+1,w[2]]:[0,w[1],w[2]+1];
+  S.me.words[item.w]=nw;
+}
+function answer(a){
+  const g=S.game; if(!g||g.locked) return; g.locked=true;
+  let ok;
+  if(g.mode==="fall"){ ok=a===g.cur.a; if(ok) g.caseOk[g.cur.c]=(g.caseOk[g.cur.c]||0)+1; const cs=S.me.caseSeen||(S.me.caseSeen={}); cs[g.cur.s]=ok?(cs[g.cur.s]||0)+1:0; }
+  else { ok=a===ART[g.cur.g]; bumpWord(g.cur,ok); const r=ruleFor(g.cur); if(ok&&r&&!r.match) g.excOk++; }
+  g.n++;
+  if(ok){ g.ok++; g.combo++; g.best=Math.max(g.best,g.combo);
+    const base=g.mode==="fall"?15:g.mode==="tresor"?12:10; const bonus=g.combo>=10?10:g.combo>=5?5:0; g.xp+=base+bonus; }
+  else { g.combo=0; g.mistakes.push(g.mode==="fall"?{fall:g.cur,given:a}:{item:g.cur,given:a}); }
+  g.feedback={ok,answer:a===undefined?"":(g.mode==="fall"?(ok?a:g.cur.a):a)};
+  if(g.mode==="blitz"){
+    if(ok){ render(); setTimeout(()=>{ if(S.game===g && g.feedback) cont(); },380); }
+    else { g.pauseAt=performance.now(); render(); }
+  } else if(g.mode==="tresor"){
+    if(ok){ render(); setTimeout(()=>{ if(S.game===g && g.feedback) cont(); },600); } else render();
+  } else render();
+}
+document.addEventListener("keydown",e=>{
+  if(S.view!=="game"||!S.game) return;
+  const g=S.game;
+  if(g.feedback){ if(e.key===" "||e.key==="Enter"){ e.preventDefault(); if(!g.feedback.ok||g.mode==="fall") cont(); } return; }
+  const map=g.mode==="fall"?{"1":"der","2":"die","3":"das","4":"den","5":"dem","6":"des"}:{"1":"der","2":"die","3":"das"};
+  if(map[e.key]) answer(map[e.key]);
+});
+
+function endGame(done,quit){
+  const g=S.game; if(!g||g.ended) return; g.ended=true; clearInterval(g.timer);
+  if(quit && g.n===0){ S.game=null; S.view="home"; render(); return; }
+  const p=S.me, before=levelOf(p.xp), t=today(), wk=weekKey();
+  // Serie
+  if(p.lastDay!==t){ const y=new Date(); y.setDate(y.getDate()-1); const yk=y.getFullYear()+"-"+String(y.getMonth()+1).padStart(2,"0")+"-"+String(y.getDate()).padStart(2,"0");
+    p.streak=(p.lastDay===yk)?p.streak+1:1; p.lastDay=t; p.bestStreak=Math.max(p.bestStreak||0,p.streak); }
+  // Tagesziel-Bonus
+  if(p.dayKey!==t){ p.dayKey=t; p.dayXP=0; }
+  let bonus=0; if(p.dayXP<DAILY_GOAL && p.dayXP+g.xp>=DAILY_GOAL) bonus=50;
+  const gained=g.xp+bonus;
+  p.dayXP+=g.xp; p.xp+=gained;
+  if(p.weekKey!==wk){ p.weekKey=wk; p.weekXP=0; } p.weekXP+=gained;
+  if(g.mode==="blitz") p.bestBlitz=Math.max(p.bestBlitz||0,g.xp);
+  p.games++; p.correct+=g.ok; p.total+=g.n; p.bestCombo=Math.max(p.bestCombo,g.best);
+  for(const [c,n] of Object.entries(g.caseOk)) p.caseOk[c]=(p.caseOk[c]||0)+n;
+  p.excOk=(p.excOk||0)+g.excOk;
+  const newB=BADGES.filter(b=>!p.badges.includes(b.id)&&b.t(p)); p.badges.push(...newB.map(b=>b.id));
+  g.result={gained,bonus,levelUp:levelOf(p.xp)>before?levelOf(p.xp):0,newB};
+  saveMe();
+  S.view="result"; render();
+}
+function renderResult(app){
+  const g=S.game, r=g.result, acc=g.n?Math.round(g.ok/g.n*100):0;
+  const mist=g.mistakes.slice(0,12).map(m=>m.fall
+    ? `<li><b>${esc(m.fall.s.startsWith("___")?m.fall.a[0].toUpperCase()+m.fall.a.slice(1)+m.fall.s.slice(3):m.fall.s.replace("___", m.fall.a))}</b><small>Du: ${esc(m.given)} · ${CASE_NAME[m.fall.c]}: ${esc(m.fall.r)}</small></li>`
+    : `<li class="${m.item.g}">${explain(m.item)}<small>Du hast „${esc(m.given)}“ gewählt.</small></li>`).join("");
+  app.innerHTML=`${topBar()}<div class="result">
+    ${r.levelUp?`<div class="lvlup">Level ${r.levelUp} erreicht · ${titleOf(r.levelUp)}</div>`:""}
+    <div class="hero"><span class="label">${g.mode==="blitz"?"Blitzrunde":g.mode==="fall"?"Fall-Fallen":"Problemwörter"}</span>
+      <div class="big mono">+${r.gained}</div><span>XP${r.bonus?` · inkl. ${r.bonus} Bonus fürs Tagesziel`:""}</span>
+      <div class="stats"><div><b class="mono">${g.ok}/${g.n}</b><small class="muted">richtig</small></div><div><b class="mono">${acc} %</b><small class="muted">Quote</small></div><div><b class="mono">${g.best}</b><small class="muted">beste Kombo</small></div></div>
+    </div>
+    ${r.newB.length?`<div class="panel"><h2>Neues Abzeichen</h2><div class="badges">${r.newB.map(b=>`<div class="badge on"><span class="medal">★</span><b>${b.n}</b><small>${b.d}</small></div>`).join("")}</div></div>`:""}
+    ${mist?`<div class="panel"><h2>Das merkst du dir</h2><ul class="mist">${mist}</ul>${g.mode!=="fall"?`<p class="note">Diese Wörter liegen jetzt bei deinen Problemwörtern.</p>`:""}</div>`:`<div class="panel"><p class="note">Fehlerfrei. Stark!</p></div>`}
+    <div class="btns"><button class="btn" id="home">Übersicht</button><button class="btn primary" id="again">Nochmal</button></div>
+  </div>`;
+  $("#home").onclick=()=>{S.game=null;S.view="home";render();};
+  $("#again").onclick=()=>{const m=g.mode; if(m==="tresor"&&!weakWords(S.me).length){S.view="home";render();return;} startGame(m);};
+}
+
+/* ============================== SPEICHERN ============================== */
+function saveMe(){ S.me.updatedAt=Date.now(); lsSet(LS_KEY,S.me); }
+
+/* ============================== START ============================== */
+const saved=lsGet(LS_KEY);
+if(saved){ S.me=Object.assign(blankProfile(saved.name||"Du"),saved); S.view="home"; } else S.view="onboard";
+render();
+</script>
+</body>
+</html>
